@@ -1,72 +1,17 @@
-from typing import Annotated, Union
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query
-from sqlmodel import Field, Session, SQLModel, create_engine, select
-from pydantic import BaseModel
+from sqlmodel import Session, create_engine, select
 
-from sqlalchemy.engine import URL
+from src.Model.Muscle import Muscle, MusclePublic, MuscleCreate, MuscleUpdate
+from src.Model.MuscleGroup import Muscle_Group, MuscleGroupPublic, MuscleGroupCreate, MuscleGroupUpdate
 
-# Model for the muscle Group
-# TODO: Remove this in one other file
-class MuscleGroupBase(SQLModel):
-    name : str = Field(index=True)
-    description : str | None = Field(default=None,index=True)
-
-class Muscle_Group(MuscleGroupBase, table=True):
-    id : int | None  = Field(default=None, primary_key=True)
-
-class MuscleGroupPublic(MuscleGroupBase):
-    id: int
-
-class MuscleGroupCreate(MuscleGroupBase):
-    name: str
-    description: str | None = None
-
-class MuscleGroupUpdate(MuscleGroupBase):
-    name : str | None = None
-    description : str | None = None
-
-# ------------------- end -----------------------
-
-# Model for the muscle
-# TODO: Remove this in one other file
-
-class MuscleBase(SQLModel):
-    name : str = Field(index=True)
-    description : str | None = Field(default=None,index=True)
-    muscleGroup_id : int = Field(foreign_key="muscle_group.id",index=True)
-    
-class Muscle(MuscleBase, table= True):
-    id : int = Field(default=None, primary_key=True)
-
-class MusclePublic(MuscleBase):
-    id: int
-
-class MuscleCreate(MuscleBase):
-    name: str
-    description: str | None = None
-    muscleGroup_id: int
-    
-class MuscleUpdate(MuscleBase):
-    name: str | None = None
-    description: str | None = None
-    muscleGroup_id: int | None = None
-# ------------------- end -----------------------
+from src.Database.db import get_db
 
 
-# db configuration
-database_url = URL.create(
-    "mysql+pymysql",
-    username="root",
-    password="",
-    host="localhost",
-    database="muscle_API",
-)
+database_url = get_db()
 
 engine = create_engine(database_url)
-# --------------------------------
-
-
 
 def get_session():
     with Session(engine) as session:
@@ -124,10 +69,6 @@ def update_Muscle(muscle_id: int, muscle: MuscleUpdate, session: SessionDep):
     session.commit()
     session.refresh(muscle_db)
     return muscle_db
-
-
-
-
 
 # Muscle Group requests
 @app.post("/muscleGroup/", response_model=MuscleGroupPublic)
